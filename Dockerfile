@@ -2,7 +2,7 @@
 # remove a few superfluous things and
 # create a new runner image from ubuntu:24.04
 # with the previous runner's artifacts
-ARG VALHALLA_BUILDER_IMAGE=ghcr.io/valhalla/valhalla:latest
+ARG VALHALLA_BUILDER_IMAGE=ghcr.io/valhalla/valhalla:3.5.0
 FROM $VALHALLA_BUILDER_IMAGE as builder
 MAINTAINER Nils Nolde <nils@gis-ops.com>
 
@@ -16,16 +16,15 @@ RUN cd /usr/local/bin && \
 FROM ubuntu:24.04 as runner_base
 MAINTAINER Nils Nolde <nils@gis-ops.com>
 
-RUN apt-get update > /dev/null && \
-  export DEBIAN_FRONTEND=noninteractive && \
-  apt-get install -y libluajit-5.1-2 libgdal34 \
-  libzmq5 libczmq4 spatialite-bin libprotobuf-lite32 sudo locales \
-  libsqlite3-0 libsqlite3-mod-spatialite libcurl4 \
-  python3.12-minimal python3-requests python3-shapely python-is-python3 \
-  curl unzip moreutils jq spatialite-bin > /dev/null
+RUN export DEBIAN_FRONTEND=noninteractive && apt update && \
+    apt install -y \
+      libcurl4 libczmq4 libluajit-5.1-2 libgdal34 \
+      libprotobuf-lite32 libsqlite3-0 libsqlite3-mod-spatialite libzmq5 zlib1g \
+      curl gdb locales parallel python3-minimal python-is-python3 python3-shapely python3-requests \
+      spatialite-bin unzip wget jq curl unzip moreutils jq sudo && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /usr/local /usr/local
-COPY --from=builder /usr/local/lib/python3.12/dist-packages/valhalla /usr/local/lib/python3.12/dist-packages/
+COPY --from=builder /usr/local/lib/python3.12/dist-packages/valhalla/* /usr/local/lib/python3.12/dist-packages/valhalla/
 
 ENV LD_LIBRARY_PATH="/usr/local/lib:${LD_LIBRARY_PATH}"
 # export the True defaults
